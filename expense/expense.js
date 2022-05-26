@@ -2,6 +2,7 @@
 
 const { Client } = require("pg");
 const { argv, exit } = require("node:process");
+const readline = require("readline-sync");
 
 db_config = {
   database: "expense",
@@ -12,20 +13,29 @@ db_config = {
 
 class CLI {
   constructor() {
-    this.expenseData = new ExpenseData(db_config);
+    this.data = new ExpenseData(db_config);
   }
   main(argv) {
     if (argv[2] === "list") {
-      this.expenseData.printAllExpenses();
+      this.data.printAllExpenses();
     } else if (argv[2] === "add") {
-      this.expenseData.addExpense(argv[3], argv[4]);
-    } else if (argv[2] === "clear") {
-      console.log("deleting all expenses");
+      this.data.addExpense(argv[3], argv[4]);
     } else if (argv[2] === "search") {
       const searchTerm = argv.slice(3).join(" "); // allow for search of multiple words
-      this.expenseData.printSearchedExpense(searchTerm);
+      this.data.printSearchedExpense(searchTerm);
     } else if (argv[2] === "delete") {
-      this.expenseData.deleteExpense(argv[3]);
+      if (argv[3] === undefined) {
+        console.log("Please specify the id of an expense to delete");
+      } else {
+        this.data.deleteExpense(argv[3]);
+      }
+    } else if (argv[2] === "clear") {
+      const confirmed = readline.keyInYNStrict(
+        "This will remove all expenses. Are you sure? (enter y to confirm)"
+      );
+      if (confirmed) {
+        this.data.deleteAllExpenses();
+      }
     } else {
       this.printHelp();
     }
@@ -124,6 +134,16 @@ class ExpenseData {
         .query(queryTextDelete, queryArgs)
         .catch(this.logAndExit);
     }
+
+    this.client.end().catch(this.logAndExit);
+  }
+
+  async deleteAllExpenses() {
+    const queryText = `DELETE FROM expenses`;
+
+    await this.client.connect().catch(this.logAndExit);
+    await this.client.query(queryText).catch(this.logAndExit);
+    console.log("All expenses have been deleted");
 
     this.client.end().catch(this.logAndExit);
   }
