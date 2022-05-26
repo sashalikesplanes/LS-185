@@ -41,7 +41,7 @@ class CLI {
   search QUERY - list expenses with a matching memo field`);
   }
 }
-// test
+// test2
 class ExpenseData {
   constructor(config) {
     this.config = config;
