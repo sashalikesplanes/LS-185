@@ -38,6 +38,25 @@ async function printAllExpenses() {
   });
 }
 
+async function addExpense(amount, memo) {
+  if (amount === undefined || memo === undefined) {
+    console.log("You must provide an amount and a memo");
+    return;
+  }
+
+  const client = new Client(config);
+  await client.connect();
+
+  try {
+    await client.query(
+      `INSERT INTO expenses(amount, memo, created_on) VALUES (${amount}, '${memo}', NOW());`
+    );
+  } catch (e) {
+    console.log(`Error: ${e}`);
+  }
+  client.end();
+}
+
 function printHelp() {
   console.log(`
 An expense recording system
@@ -51,8 +70,8 @@ delete NUMBER - remove expense with id NUMBER
 search QUERY - list expenses with a matching memo field`);
 }
 
-// Get command line arguments
-
+// MAIN
 if (argv[2] === "list") printAllExpenses(getAllExpenses());
+else if (argv[2] === "add") addExpense(argv[3], argv[4]);
 else if (argv[2] === "clear") console.log("deleting all expenses");
 else printHelp();
