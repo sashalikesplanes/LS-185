@@ -24,6 +24,8 @@ class CLI {
     } else if (argv[2] === "search") {
       const searchTerm = argv.slice(3).join(" "); // allow for search of multiple words
       this.expenseData.printSearchedExpense(searchTerm);
+    } else if (argv[2] === "delete") {
+      this.expenseData.deleteExpense(argv[3]);
     } else {
       this.printHelp();
     }
@@ -41,7 +43,7 @@ class CLI {
   search QUERY - list expenses with a matching memo field`);
   }
 }
-// test3
+
 class ExpenseData {
   constructor(config) {
     this.config = config;
@@ -99,6 +101,30 @@ class ExpenseData {
 
     await this.client.connect().catch(this.logAndExit);
     await this.client.query(queryText, queryArgs).catch(this.logAndExit);
+
+    this.client.end().catch(this.logAndExit);
+  }
+
+  async deleteExpense(expenseId) {
+    // SELECT ID to check for existence and to inform user of which was deleted
+    const queryTextSelect = `SELECT * FROM expenses WHERE id=$1`;
+    const queryTextDelete = `DELETE FROM expenses WHERE id=$1`;
+    const queryArgs = [expenseId];
+
+    await this.client.connect().catch(this.logAndExit);
+    const expenses = (
+      await this.client.query(queryTextSelect, queryArgs).catch(this.logAndExit)
+    ).rows;
+
+    if (expenses.length === 0) {
+      console.log(`There is no expenses with id '${expenseId}'.`);
+    } else {
+      this.printExpenses(expenses);
+      await this.client
+        .query(queryTextDelete, queryArgs)
+        .catch(this.logAndExit);
+    }
+
     this.client.end().catch(this.logAndExit);
   }
 
