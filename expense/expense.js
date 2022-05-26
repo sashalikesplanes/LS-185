@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
 const { Client } = require("pg");
-const { argv } = require("node:process");
+const { argv, exit } = require("node:process");
+const { process } = require("node.process");
+const client = require("pg/lib/native/client");
 
 config = {
   database: "expense",
@@ -10,17 +12,27 @@ config = {
   port: 5432,
 };
 
+function logAndExit(error) {
+  console.log(`Error expense.js | ${errors}`);
+  exit(1);
+}
+
 async function getAllExpenses() {
-  const client = new Client(config);
-  await client.connect();
+  try {
+    const client = new Client(config);
+    await client.connect();
 
-  const expenses = (
-    await client.query("SELECT * FROM expenses ORDER BY created_on ASC;")
-  ).rows;
+    const expenses = (
+      await client.query("SELECT * FROM expenses ORDER BY created_on ASC;")
+    ).rows;
 
-  client.end();
+    client.end();
 
-  return await expenses;
+    return await expenses;
+  } catch (e) {
+    client.end();
+    logAndExit(e);
+  }
 }
 
 async function printAllExpenses() {
@@ -39,22 +51,23 @@ async function printAllExpenses() {
 }
 
 async function addExpense(amount, memo) {
+  // TODO validate inputs
   if (amount === undefined || memo === undefined) {
     console.log("You must provide an amount and a memo");
     return;
   }
 
-  const client = new Client(config);
-  await client.connect();
+  query = `INSERT INTO expenses(amount, memo, created_on) VALUES (${amount}, '${memo}', NOW());`;
 
   try {
-    await client.query(
-      `INSERT INTO expenses(amount, memo, created_on) VALUES (${amount}, '${memo}', NOW());`
-    );
+    const client = new Client(config);
+    await client.connect();
+    await client.query(query);
   } catch (e) {
-    console.log(`Error: ${e}`);
+    logAndExit(e);
+  } finally {
+    client.end();
   }
-  client.end();
 }
 
 function printHelp() {
