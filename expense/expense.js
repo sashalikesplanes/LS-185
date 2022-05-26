@@ -74,16 +74,40 @@ class ExpenseData {
   }
 
   printExpenses(expenses) {
+    if (expenses.length === 0) {
+      console.log("There are no expenses.");
+      return;
+    } else if (expenses.length === 1) {
+      console.log("There is 1 expense");
+    } else {
+      console.log(`There are ${expenses.length} expenses.`);
+    }
+
+    let lengthOfLongestRow = 0;
     expenses.forEach((expense) => {
-      const textColumns = [
+      const textFields = [
         String(expense.id),
         expense.created_on.toDateString(),
         String(expense.amount).padStart(15, " "),
         String(expense.memo),
       ];
 
-      console.log(textColumns.join(" | "));
+      const rowText = textFields.join(" | ");
+
+      if (rowText.length > lengthOfLongestRow) {
+        lengthOfLongestRow = rowText.length;
+      }
+
+      console.log(rowText);
     });
+
+    console.log("-".repeat(lengthOfLongestRow));
+
+    const sumOfExpenses = expenses.reduce((sum, expense) => {
+      return sum + Number(expense.amount);
+    }, 0);
+
+    console.log(`Total ${sumOfExpenses.toFixed(2).padStart(31)}`);
   }
 
   async printSearchedExpense(searchTerm) {
