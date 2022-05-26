@@ -86,7 +86,7 @@ class ExpenseData {
   }
 
   async getSearchedExpenses(searchTerm) {
-    const queryText = `SELECT * FROM expenses WHERE LOWER(memo) LIKE LOWER('%' || $1 || '%');`;
+    const queryText = `SELECT * FROM expenses WHERE memo ILIKE '%' || $1 || '%';`;
     const queryArgs = [searchTerm];
 
     await this.client.connect().catch(this.logAndExit);
