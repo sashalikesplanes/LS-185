@@ -60,8 +60,23 @@ class ExpenseData {
     this.client = new Client(config);
   }
 
+  async createTable() {
+    await this.client
+      .query(
+        `CREATE TABLE IF NOT EXISTS expenses (
+      id serial PRIMARY KEY,
+      amount numeric(8, 2) NOT NULL
+          CHECK (amount > 0),
+      memo text NOT NULL,
+      created_on date NOT NULL
+  );`
+      )
+      .catch(this.logAndExit);
+  }
+
   async printAllExpenses() {
     await this.client.connect().catch(this.logAndExit);
+    await this.createTable();
 
     const expenses = (
       await this.client
@@ -86,6 +101,7 @@ class ExpenseData {
 
   printExpenses(expenses) {
     this.printCount(expenses.length);
+    if (expenses.length === 0) return;
 
     let lengthOfLongestRow = 0;
     expenses.forEach((expense) => {
@@ -119,6 +135,7 @@ class ExpenseData {
     const queryArgs = [searchTerm];
 
     await this.client.connect().catch(this.logAndExit);
+    await this.createTable();
     const expenses = (
       await this.client.query(queryText, queryArgs).catch(this.logAndExit)
     ).rows;
@@ -138,6 +155,7 @@ class ExpenseData {
     const queryArgs = [amount, memo];
 
     await this.client.connect().catch(this.logAndExit);
+    await this.createTable();
     await this.client.query(queryText, queryArgs).catch(this.logAndExit);
 
     this.client.end().catch(this.logAndExit);
@@ -150,6 +168,7 @@ class ExpenseData {
     const queryArgs = [expenseId];
 
     await this.client.connect().catch(this.logAndExit);
+    await this.createTable();
     const expenses = (
       await this.client.query(queryTextSelect, queryArgs).catch(this.logAndExit)
     ).rows;
@@ -170,6 +189,7 @@ class ExpenseData {
     const queryText = `DELETE FROM expenses`;
 
     await this.client.connect().catch(this.logAndExit);
+    await this.createTable();
     await this.client.query(queryText).catch(this.logAndExit);
     console.log("All expenses have been deleted");
 
