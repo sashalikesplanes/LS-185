@@ -49,7 +49,15 @@ class ExpenseData {
   }
 
   async printAllExpenses() {
-    const expenses = await this.getAllExpenses();
+    await this.client.connect().catch(this.logAndExit);
+
+    const expenses = (
+      await this.client
+        .query("SELECT * FROM expenses ORDER BY created_on ASC;")
+        .catch(this.logAndExit)
+    ).rows;
+
+    this.client.end().catch(this.logAndExit);
     this.printExpenses(expenses);
   }
 
@@ -66,26 +74,7 @@ class ExpenseData {
     });
   }
 
-  async getAllExpenses() {
-    await this.client.connect().catch(this.logAndExit);
-
-    const expenses = (
-      await this.client
-        .query("SELECT * FROM expenses ORDER BY created_on ASC;")
-        .catch(this.logAndExit)
-    ).rows;
-
-    this.client.end().catch(this.logAndExit);
-
-    return await expenses;
-  }
-
   async printSearchedExpense(searchTerm) {
-    const expenses = await this.getSearchedExpenses(searchTerm);
-    this.printExpenses(expenses);
-  }
-
-  async getSearchedExpenses(searchTerm) {
     const queryText = `SELECT * FROM expenses WHERE memo ILIKE '%' || $1 || '%';`;
     const queryArgs = [searchTerm];
 
@@ -95,7 +84,7 @@ class ExpenseData {
     ).rows;
 
     this.client.end();
-    return expenses;
+    this.printExpenses(expenses);
   }
 
   async addExpense(amount, memo) {
