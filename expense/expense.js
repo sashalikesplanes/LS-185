@@ -73,15 +73,19 @@ class ExpenseData {
     this.printExpenses(expenses);
   }
 
-  printExpenses(expenses) {
-    if (expenses.length === 0) {
+  printCount(count) {
+    if (count === 0) {
       console.log("There are no expenses.");
       return;
-    } else if (expenses.length === 1) {
+    } else if (count === 1) {
       console.log("There is 1 expense");
     } else {
-      console.log(`There are ${expenses.length} expenses.`);
+      console.log(`There are ${count} expenses.`);
     }
+  }
+
+  printExpenses(expenses) {
+    this.printCount(expenses.length);
 
     let lengthOfLongestRow = 0;
     expenses.forEach((expense) => {

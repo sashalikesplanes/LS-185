@@ -1,6 +1,6 @@
 DROP TABLE expenses;
 
-CREATE TABLE expenses (
+CREATE TABLE IF NOT EXISTS expenses (
     id serial PRIMARY KEY,
     amount numeric(8, 2) NOT NULL
         CHECK (amount > 0),
