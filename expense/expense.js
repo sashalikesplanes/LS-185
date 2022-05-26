@@ -2,8 +2,6 @@
 
 const { Client } = require("pg");
 const { argv, exit } = require("node:process");
-const { process } = require("node.process");
-const client = require("pg/lib/native/client");
 
 config = {
   database: "expense",
@@ -13,13 +11,13 @@ config = {
 };
 
 function logAndExit(error) {
-  console.log(`Error expense.js | ${errors}`);
+  console.log(`Error expense.js | ${error}`);
   exit(1);
 }
 
 async function getAllExpenses() {
+  const client = new Client(config);
   try {
-    const client = new Client(config);
     await client.connect();
 
     const expenses = (
@@ -57,12 +55,12 @@ async function addExpense(amount, memo) {
     return;
   }
 
-  query = `INSERT INTO expenses(amount, memo, created_on) VALUES (${amount}, '${memo}', NOW());`;
+  query = `INSERT INTO expenses(amount, memo, created_on) VALUES ($1, $2, NOW());`;
 
+  const client = new Client(config);
   try {
-    const client = new Client(config);
     await client.connect();
-    await client.query(query);
+    await client.query(query, [amount, memo]);
   } catch (e) {
     logAndExit(e);
   } finally {
