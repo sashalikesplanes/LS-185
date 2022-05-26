@@ -21,6 +21,9 @@ class CLI {
       this.expenseData.addExpense(argv[3], argv[4]);
     } else if (argv[2] === "clear") {
       console.log("deleting all expenses");
+    } else if (argv[2] === "search") {
+      const searchTerm = argv.slice(3).join(" "); // allow for search of multiple words
+      this.expenseData.printSearchedExpense(searchTerm);
     } else {
       this.printHelp();
     }
@@ -45,9 +48,22 @@ class ExpenseData {
     this.client = new Client(config);
   }
 
-  logAndExit(error) {
-    console.log(`Error expense.js | ${error}`);
-    exit(1);
+  async printAllExpenses() {
+    const expenses = await this.getAllExpenses();
+    this.printExpenses(expenses);
+  }
+
+  printExpenses(expenses) {
+    expenses.forEach((expense) => {
+      const textColumns = [
+        String(expense.id),
+        expense.created_on.toDateString(),
+        String(expense.amount).padStart(15, " "),
+        String(expense.memo),
+      ];
+
+      console.log(textColumns.join(" | "));
+    });
   }
 
   async getAllExpenses() {
@@ -64,19 +80,22 @@ class ExpenseData {
     return await expenses;
   }
 
-  async printAllExpenses() {
-    const expenses = await this.getAllExpenses();
+  async printSearchedExpense(searchTerm) {
+    const expenses = await this.getSearchedExpenses(searchTerm);
+    this.printExpenses(expenses);
+  }
 
-    expenses.forEach((expense) => {
-      const textColumns = [
-        String(expense.id),
-        expense.created_on.toDateString(),
-        String(expense.amount).padStart(15, " "),
-        String(expense.memo),
-      ];
+  async getSearchedExpenses(searchTerm) {
+    const queryText = `SELECT * FROM expenses WHERE LOWER(memo) LIKE LOWER('%' || $1 || '%');`;
+    const queryArgs = [searchTerm];
 
-      console.log(textColumns.join(" | "));
-    });
+    await this.client.connect().catch(this.logAndExit);
+    const expenses = (
+      await this.client.query(queryText, queryArgs).catch(this.logAndExit)
+    ).rows;
+
+    this.client.end();
+    return expenses;
   }
 
   async addExpense(amount, memo) {
@@ -92,6 +111,11 @@ class ExpenseData {
     await this.client.connect().catch(this.logAndExit);
     await this.client.query(queryText, queryArgs).catch(this.logAndExit);
     this.client.end().catch(this.logAndExit);
+  }
+
+  logAndExit(error) {
+    console.log(`Error expense.js | ${error}`);
+    exit(1);
   }
 }
 
